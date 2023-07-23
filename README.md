@@ -1,2 +1,7 @@
-# axum-diesel-template
-Rust API template using Axum, Diesel and Postgres
+# Rust API template using Axum, Diesel and Postgres
+
+## Setup
+
+    ```bash
+        docker-compose up -d
+    ```
