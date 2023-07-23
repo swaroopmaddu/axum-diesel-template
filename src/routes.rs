@@ -2,7 +2,7 @@ use std::i32;
 
 use axum::{
     extract::{Path, State},
-    routing::{get, post, put},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use serde_json::{json, Value};
@@ -16,6 +16,7 @@ pub fn create_router(app_state: AppState) -> Router {
         .route("/todos", get(hanldle_list_todos))
         .route("/todos/:id", get(hanldle_list_todo_item))
         .route("/update/:id", put(handle_update_todo))
+        .route("/update/:id", delete(handle_delete_todo))
         .with_state(app_state)
 }
 
@@ -48,7 +49,7 @@ async fn index() -> Json<Value> {
                 "description": "Updates a single todo item"
             },
             {
-                "path": "/delete/{id}",
+                "path": "/update/{id}",
                 "methods": ["DELETE"],
                 "description": "Deletes a single todo item"
             }
@@ -115,6 +116,21 @@ async fn handle_update_todo(State(app): State<AppState>, Path(id): Path<i32>) ->
         }
         Err(e) => {
             tracing::error!("Failed to update todo item: {:?}", e);
+            Json(json!({ "success": false, "error": e.to_string() }))
+        }
+    }
+}
+
+async fn handle_delete_todo(State(app): State<AppState>, Path(id): Path<i32>) -> Json<Value> {
+    let result = app.db.delete_task(id).await;
+
+    match result {
+        Ok(_) => {
+            tracing::info!("Deleted todo item with id: {id}");
+            Json(json!({ "success": true }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to Delete todo item: {:?}", e);
             Json(json!({ "success": false, "error": e.to_string() }))
         }
     }

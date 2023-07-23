@@ -62,4 +62,14 @@ impl DbClient {
 
         Ok(())
     }
+
+    pub async fn delete_task(&self, id: i32) -> Result<(), diesel::result::Error> {
+        let conn = &mut self.db_pool.get().unwrap();
+
+        let _ = diesel::delete(crate::schema::tasks::table)
+            .filter(crate::schema::tasks::task_id.eq(id))
+            .execute(conn)?;
+
+        Ok(())
+    }
 }
