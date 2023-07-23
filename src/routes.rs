@@ -1,5 +1,7 @@
+use std::i32;
+
 use axum::{
-    extract::State,
+    extract::{Path, State},
     routing::{get, post},
     Json, Router,
 };
@@ -12,6 +14,7 @@ pub fn create_router(app_state: AppState) -> Router {
         .route("/", get(index))
         .route("/create", post(hanlde_create_todo))
         .route("/todos", get(hanldle_list_todos))
+        .route("/todos/:id", get(hanldle_list_todo_item))
         .with_state(app_state)
 }
 
@@ -72,6 +75,22 @@ async fn hanlde_create_todo(
 
 async fn hanldle_list_todos(State(app): State<AppState>) -> Json<Value> {
     let result = app.db.list_tasks().await;
+
+    match result {
+        Ok(tasks) => {
+            tracing::info!("Listed all todo items");
+            Json(json!({ "success": true, "tasks": tasks }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to list all todo items: {:?}", e);
+            Json(json!({ "success": false, "error": e.to_string() }))
+        }
+    }
+}
+
+async fn hanldle_list_todo_item(State(app): State<AppState>, Path(id): Path<i32>) -> Json<Value> {
+    let result: Result<Vec<crate::models::TodoList>, diesel::result::Error> =
+        app.db.list_task(id).await;
 
     match result {
         Ok(tasks) => {

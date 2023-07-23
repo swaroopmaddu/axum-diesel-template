@@ -1,9 +1,10 @@
-use std::sync::Arc;
-
 use diesel::{
+    expression_methods::ExpressionMethods,
+    query_dsl::QueryDsl,
     r2d2::{ConnectionManager, Pool},
     PgConnection, RunQueryDsl,
 };
+use std::sync::Arc;
 
 use crate::models::{TodoItem, TodoList};
 
@@ -37,6 +38,16 @@ impl DbClient {
         let conn = &mut self.db_pool.get().unwrap();
 
         let tasks = crate::schema::tasks::table.load::<TodoList>(conn)?;
+
+        Ok(tasks)
+    }
+
+    pub async fn list_task(&self, id: i32) -> Result<Vec<TodoList>, diesel::result::Error> {
+        let conn = &mut self.db_pool.get().unwrap();
+
+        let tasks = crate::schema::tasks::table
+            .filter(crate::schema::tasks::task_id.eq(id))
+            .load::<TodoList>(conn)?;
 
         Ok(tasks)
     }
