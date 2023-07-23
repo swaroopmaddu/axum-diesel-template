@@ -11,6 +11,7 @@ pub fn create_router(app_state: AppState) -> Router {
     Router::new()
         .route("/", get(index))
         .route("/create", post(hanlde_create_todo))
+        .route("/todos", get(hanldle_list_todos))
         .with_state(app_state)
 }
 
@@ -28,12 +29,12 @@ async fn index() -> Json<Value> {
                 "description": "Creates a new todo item"
             },
             {
-                "path": "/list",
+                "path": "/todos",
                 "methods": ["GET"],
                 "description": "Returns a list of all todo items"
             },
             {
-                "path": "/list/{id}",
+                "path": "/todos/{id}",
                 "methods": ["GET"],
                 "description": "Returns a single todo item"
             },
@@ -64,6 +65,21 @@ async fn hanlde_create_todo(
         }
         Err(e) => {
             tracing::error!("Failed to create new todo item: {:?}", e);
+            Json(json!({ "success": false, "error": e.to_string() }))
+        }
+    }
+}
+
+async fn hanldle_list_todos(State(app): State<AppState>) -> Json<Value> {
+    let result = app.db.list_tasks().await;
+
+    match result {
+        Ok(tasks) => {
+            tracing::info!("Listed all todo items");
+            Json(json!({ "success": true, "tasks": tasks }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to list all todo items: {:?}", e);
             Json(json!({ "success": false, "error": e.to_string() }))
         }
     }

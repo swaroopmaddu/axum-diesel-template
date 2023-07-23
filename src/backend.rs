@@ -5,7 +5,7 @@ use diesel::{
     PgConnection, RunQueryDsl,
 };
 
-use crate::models::TodoItem;
+use crate::models::{TodoItem, TodoList};
 
 #[derive(Clone)]
 pub struct DbClient {
@@ -22,6 +22,7 @@ impl DbClient {
             ),
         }
     }
+
     pub async fn create_task(&self, task: &TodoItem) -> Result<(), diesel::result::Error> {
         let conn = &mut self.db_pool.get().unwrap();
 
@@ -30,5 +31,13 @@ impl DbClient {
             .execute(conn)?;
 
         Ok(())
+    }
+
+    pub async fn list_tasks(&self) -> Result<Vec<TodoList>, diesel::result::Error> {
+        let conn = &mut self.db_pool.get().unwrap();
+
+        let tasks = crate::schema::tasks::table.load::<TodoList>(conn)?;
+
+        Ok(tasks)
     }
 }
