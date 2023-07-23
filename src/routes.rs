@@ -94,11 +94,11 @@ async fn hanldle_list_todo_item(State(app): State<AppState>, Path(id): Path<i32>
 
     match result {
         Ok(tasks) => {
-            tracing::info!("Listed all todo items");
+            tracing::info!("Listed todo item");
             Json(json!({ "success": true, "tasks": tasks }))
         }
         Err(e) => {
-            tracing::error!("Failed to list all todo items: {:?}", e);
+            tracing::error!("Failed to list todo item: {:?}", e);
             Json(json!({ "success": false, "error": e.to_string() }))
         }
     }
