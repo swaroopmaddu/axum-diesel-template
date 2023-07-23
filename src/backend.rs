@@ -51,4 +51,15 @@ impl DbClient {
 
         Ok(tasks)
     }
+
+    pub async fn update_task(&self, id: i32) -> Result<(), diesel::result::Error> {
+        let conn = &mut self.db_pool.get().unwrap();
+
+        let _ = diesel::update(crate::schema::tasks::table)
+            .filter(crate::schema::tasks::task_id.eq(id))
+            .set(crate::schema::tasks::complete.eq(true))
+            .execute(conn)?;
+
+        Ok(())
+    }
 }

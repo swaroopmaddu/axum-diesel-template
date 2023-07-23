@@ -2,7 +2,7 @@ use std::i32;
 
 use axum::{
     extract::{Path, State},
-    routing::{get, post},
+    routing::{get, post, put},
     Json, Router,
 };
 use serde_json::{json, Value};
@@ -15,6 +15,7 @@ pub fn create_router(app_state: AppState) -> Router {
         .route("/create", post(hanlde_create_todo))
         .route("/todos", get(hanldle_list_todos))
         .route("/todos/:id", get(hanldle_list_todo_item))
+        .route("/update/:id", put(handle_update_todo))
         .with_state(app_state)
 }
 
@@ -99,6 +100,21 @@ async fn hanldle_list_todo_item(State(app): State<AppState>, Path(id): Path<i32>
         }
         Err(e) => {
             tracing::error!("Failed to list todo item: {:?}", e);
+            Json(json!({ "success": false, "error": e.to_string() }))
+        }
+    }
+}
+
+async fn handle_update_todo(State(app): State<AppState>, Path(id): Path<i32>) -> Json<Value> {
+    let result = app.db.update_task(id).await;
+
+    match result {
+        Ok(_) => {
+            tracing::info!("Updated todo item with id: {id}");
+            Json(json!({ "success": true }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to update todo item: {:?}", e);
             Json(json!({ "success": false, "error": e.to_string() }))
         }
     }
