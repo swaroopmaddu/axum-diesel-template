@@ -1,0 +1,7 @@
+-- Your SQL goes here
+
+CREATE TABLE tasks (
+	task_id SERIAL PRIMARY KEY,
+	task VARCHAR(256) NOT NULL,
+	complete BOOLEAN NOT NULL DEFAULT FALSE
+);

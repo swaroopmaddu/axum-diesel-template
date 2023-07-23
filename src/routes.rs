@@ -1,8 +1,17 @@
-use axum::{routing::get, Json, Router};
+use axum::{
+    extract::State,
+    routing::{get, post},
+    Json, Router,
+};
 use serde_json::{json, Value};
 
-pub fn create_router() -> Router {
-    Router::new().route("/", get(index))
+use crate::{models::TodoItem, AppState};
+
+pub fn create_router(app_state: AppState) -> Router {
+    Router::new()
+        .route("/", get(index))
+        .route("/create", post(hanlde_create_todo))
+        .with_state(app_state)
 }
 
 async fn index() -> Json<Value> {
@@ -13,6 +22,49 @@ async fn index() -> Json<Value> {
                 "methods": ["GET"],
                 "description": "Returns this list of endpoints"
             },
+            {
+                "path": "/create",
+                "methods": ["POST"],
+                "description": "Creates a new todo item"
+            },
+            {
+                "path": "/list",
+                "methods": ["GET"],
+                "description": "Returns a list of all todo items"
+            },
+            {
+                "path": "/list/{id}",
+                "methods": ["GET"],
+                "description": "Returns a single todo item"
+            },
+            {
+                "path": "/update/{id}",
+                "methods": ["PUT"],
+                "description": "Updates a single todo item"
+            },
+            {
+                "path": "/delete/{id}",
+                "methods": ["DELETE"],
+                "description": "Deletes a single todo item"
+            }
         ]
     }))
+}
+
+async fn hanlde_create_todo(
+    State(app): State<AppState>,
+    Json(payload): Json<TodoItem>,
+) -> Json<Value> {
+    let result = app.db.create_task(&payload).await;
+
+    match result {
+        Ok(_) => {
+            tracing::info!("Created new todo item: {:?}", payload);
+            Json(json!({ "success": true }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to create new todo item: {:?}", e);
+            Json(json!({ "success": false, "error": e.to_string() }))
+        }
+    }
 }
